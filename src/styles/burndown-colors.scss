@@ -1,0 +1,78 @@
+@use "sass:color";
+
+$brand: #8095EF;
+$paper: #efefef;
+$ink: #100e0e;
+$earth: #6171b6;
+$success: #349028;
+$danger: #862222;
+
+@function solid-rgb($color) {
+  @return rgb(
+    round(color.channel($color, "red", $space: rgb)),
+    round(color.channel($color, "green", $space: rgb)),
+    round(color.channel($color, "blue", $space: rgb))
+  );
+}
+
+$page-bg: solid-rgb(color.mix($paper, $earth, 94%));
+$surface-raised: solid-rgb(color.mix($paper, $earth, 90%));
+$surface-hover: solid-rgb(color.mix($surface-raised, $brand, 82%));
+$muted-text: solid-rgb(color.scale($earth, $lightness: 8%, $saturation: -45%));
+$chrome: solid-rgb(color.mix($brand, $earth, 52%));
+$accent-strong: solid-rgb(color.scale($earth, $lightness: 12%, $saturation: 3%));
+$warning: solid-rgb(color.scale($earth, $lightness: 8%, $saturation: -10%));
+$todo: solid-rgb(color.scale($earth, $lightness: 14%, $saturation: -55%));
+
+:root {
+  color-scheme: light;
+  --bg: #{$page-bg};
+  --surface: #{$paper};
+  --surface2: #{$surface-raised};
+  --surface3: #{$surface-hover};
+  --border: #{rgba($earth, 0.14)};
+  --border2: #{rgba($earth, 0.22)};
+  --text: #{$ink};
+  --muted: #{$muted-text};
+  --accent: #{$earth};
+  --accent2: #{$accent-strong};
+  --brand: #{$brand};
+  --brand-soft: #{rgba($brand, 0.22)};
+  --danger: #{$danger};
+  --success: #{$success};
+  --warn: #{$warning};
+  --todo: #{$todo};
+  --button-text: #{solid-rgb(color.mix($paper, $brand, 82%))};
+  --status-info-bg: #{rgba($brand, 0.18)};
+  --status-info-border: #{rgba($earth, 0.24)};
+  --status-error-bg: #{rgba($danger, 0.10)};
+  --status-error-border: #{rgba($danger, 0.20)};
+  --state-active-bg: #{rgba($brand, 0.24)};
+  --state-closed-bg: #{rgba($todo, 0.15)};
+  --state-future-bg: #{rgba($success, 0.12)};
+  --state-backlog-bg: #{rgba($warning, 0.13)};
+  --hover-overlay: #{rgba($brand, 0.16)};
+  --chart-grid: #{rgba($chrome, 0.10)};
+  --chart-tooltip-bg: #{$paper};
+  --chart-tooltip-border: #{rgba($chrome, 0.22)};
+  --chart-tooltip-title: #{solid-rgb(color.mix($ink, $todo, 25%))};
+  --chart-tooltip-body: #{$ink};
+  --chart-ideal: #{solid-rgb(color.scale($todo, $lightness: 8%, $saturation: 4%))};
+  --chart-actual: #{$brand};
+  --chart-actual-fill: #{rgba($brand, 0.18)};
+  --chart-scope-size: #{solid-rgb(color.mix($success, $earth, 58%))};
+  --chart-boundary: #{rgba($chrome, 0.24)};
+  --chart-boundary-label: #{rgba($ink, 0.58)};
+  --metric-topline: #{rgba(solid-rgb(color.mix($paper, $brand, 82%)), 0.72)};
+  --metric-shadow: #{rgba($chrome, 0.10)};
+  --metric-chip-bg: #{rgba($brand, 0.18)};
+  --metric-chip-border: #{rgba($chrome, 0.18)};
+  --metric-chip-text: #{solid-rgb(color.mix($chrome, $ink, 78%))};
+  --metric-neutral-orb: #{rgba($todo, 0.13)};
+  --metric-info-orb: #{rgba($brand, 0.18)};
+  --metric-accent-orb: #{rgba($brand, 0.28)};
+  --metric-success-orb: #{rgba($success, 0.14)};
+  --burndown-progress-glow: #{rgba($brand, 0.22)};
+  --burndown-forecast-good-border: #{rgba($success, 0.30)};
+  --burndown-forecast-risk-border: #{rgba($danger, 0.28)};
+}

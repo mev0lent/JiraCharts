@@ -1,0 +1,12 @@
+node_modules/
+dist/
+
+.idea/
+.claude/
+.playwright-mcp/
+
+.DS_Store
+src/.DS_Store
+
+.env
+.env.*

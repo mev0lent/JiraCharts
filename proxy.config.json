@@ -1,0 +1,11 @@
+{
+  "jiraUrl": "https://yourorg.atlassian.net",
+  "port": 7070,
+  "theme": {
+    "font": "space-grotesk",
+    "brand": "#8095ef",
+    "paper": "#EFEFEF",
+    "ink": "#100e0e",
+    "earth": "#6171b6"
+  }
+}
