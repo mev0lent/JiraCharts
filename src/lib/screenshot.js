@@ -1,11 +1,16 @@
 import { toCanvas } from 'html-to-image';
+import { appFonts, cssVar, DEFAULT_SANS_FONT } from './theme.js';
 
 const DEFAULT_PADDING = 32;
 const DEFAULT_PIXEL_RATIO = 3;
 const CANVAS_READY_TIMEOUT = 1200;
 const IMAGE_READY_TIMEOUT = 1200;
 const SCREENSHOT_EXCLUDE_SELECTOR = '[data-screenshot-exclude]';
-const SYNE_EXPORT_CSS = `
+const FONT_LOAD_WEIGHTS = {
+  sans: [400, 500, 600, 700, 800],
+  mono: [300, 400, 500, 700],
+};
+const SCREENSHOT_SANS_SELECTOR = `
   .burndown-command-title,
   .burndown-command-top strong,
   .burndown-progress-anchors strong,
@@ -13,15 +18,9 @@ const SYNE_EXPORT_CSS = `
   .burndown-command-status strong,
   .card-value,
   .sprint-name,
-  .issue-summary {
-    font-family: 'Syne', sans-serif !important;
-  }
+  .issue-summary
 `;
-let fontCssPromise = null;
-
-function cssVar(name, fallback = '') {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-}
+let fontCssCache = { key: null, promise: null };
 
 function downloadDataUrl(dataUrl, filename) {
   const link = document.createElement('a');
@@ -229,15 +228,13 @@ async function withCanvasImages(canvases, callback) {
 }
 
 async function loadAppFonts() {
+  const fonts = appFonts();
   await document.fonts?.ready;
   await Promise.all([
-    document.fonts?.load('400 14px Syne'),
-    document.fonts?.load('500 14px Syne'),
-    document.fonts?.load('700 14px Syne'),
-    document.fonts?.load('300 14px "DM Mono"'),
-    document.fonts?.load('400 14px "DM Mono"'),
-    document.fonts?.load('500 14px "DM Mono"'),
+    ...FONT_LOAD_WEIGHTS.sans.map(weight => document.fonts?.load(`${weight} 14px ${fonts.sans}`)),
+    ...FONT_LOAD_WEIGHTS.mono.map(weight => document.fonts?.load(`${weight} 14px ${fonts.mono}`)),
   ].filter(Boolean));
+  await document.fonts?.ready;
 }
 
 function blobToDataUrl(blob) {
@@ -266,20 +263,48 @@ async function inlineCssUrls(cssText, baseUrl) {
   return inlinedCss;
 }
 
+function fontStylesheetLinks() {
+  return Array.from(document.querySelectorAll('link[rel="stylesheet"][href*="fonts.googleapis.com"]'));
+}
+
+function screenshotFontOverrideCss() {
+  const { sans } = appFonts();
+  return `
+    ${SCREENSHOT_SANS_SELECTOR} {
+      font-family: ${sans} !important;
+    }
+  `;
+}
+
 async function screenshotFontCss() {
-  if (!fontCssPromise) {
-    fontCssPromise = Promise.all(
-      Array.from(document.querySelectorAll('link[rel="stylesheet"][href*="fonts.googleapis.com"]'))
-        .map(async link => {
-          const response = await fetch(link.href);
-          if (!response.ok) throw new Error(`Font-CSS konnte nicht geladen werden: ${link.href}`);
-          return inlineCssUrls(await response.text(), link.href);
+  const { sans, mono } = appFonts();
+  const links = fontStylesheetLinks();
+  const key = JSON.stringify({
+    hrefs: links.map(link => link.href),
+    sans,
+    mono,
+  });
+
+  if (fontCssCache.key !== key || !fontCssCache.promise) {
+    fontCssCache = {
+      key,
+      promise: Promise.all(
+        links.map(async link => {
+          try {
+            const response = await fetch(link.href);
+            if (!response.ok) throw new Error(`Font-CSS konnte nicht geladen werden: ${link.href}`);
+            return inlineCssUrls(await response.text(), link.href);
+          } catch {
+            return '';
+          }
         }),
-    )
-      .then(cssBlocks => `${cssBlocks.join('\n')}\n${SYNE_EXPORT_CSS}`)
-      .catch(() => '');
+      )
+        .then(cssBlocks => `${cssBlocks.filter(Boolean).join('\n')}\n${screenshotFontOverrideCss()}`)
+        .catch(() => screenshotFontOverrideCss()),
+    };
   }
-  return fontCssPromise;
+
+  return fontCssCache.promise;
 }
 
 export async function exportNodeAsPng(node, filename, options = {}) {
@@ -301,6 +326,7 @@ export async function exportNodeAsPng(node, filename, options = {}) {
     const pixelRatio = options.pixelRatio ?? DEFAULT_PIXEL_RATIO;
     const backgroundColor = options.backgroundColor ?? cssVar('--surface', '#ffffff');
     const fontEmbedCSS = await screenshotFontCss();
+    const fonts = appFonts();
     const canvases = await readyCanvases(node);
     const captureSize = nodeCaptureSize(node);
     const snapshots = canvasSnapshots(node);
@@ -312,6 +338,9 @@ export async function exportNodeAsPng(node, filename, options = {}) {
         fontEmbedCSS,
         pixelRatio,
         preferredFontFormat: 'woff2',
+        style: {
+          fontFamily: fonts.sans || DEFAULT_SANS_FONT,
+        },
       }));
     drawCanvasSnapshots(canvas, snapshots, captureSize);
 

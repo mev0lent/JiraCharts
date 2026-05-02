@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
-
-function cssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
+import { appFonts, cssVar } from '../lib/theme.js';
 
 export function BoardMetrics({ model, captureRef }) {
   if (!model) return null;
@@ -26,6 +23,7 @@ export function BoardMetrics({ model, captureRef }) {
       tooltipBorder: cssVar('--chart-tooltip-border'),
       tooltipBody: cssVar('--chart-tooltip-body'),
     };
+    const fonts = appFonts();
 
     const centerTextPlugin = {
       id: 'centerText',
@@ -36,7 +34,7 @@ export function BoardMetrics({ model, captureRef }) {
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = `bold 26px Syne, sans-serif`;
+        ctx.font = `bold 26px ${fonts.sans}`;
         ctx.fillStyle = palette.text;
         ctx.fillText(`${model.percent}%`, cx, cy);
         ctx.restore();
@@ -68,7 +66,7 @@ export function BoardMetrics({ model, captureRef }) {
             borderColor: palette.tooltipBorder,
             borderWidth: 1,
             bodyColor: palette.tooltipBody,
-            bodyFont: { family: 'DM Mono', size: 12 },
+            bodyFont: { family: fonts.mono, size: 12 },
             callbacks: {
               label: ctx => ` ${ctx.parsed} Tasks`,
             },
@@ -100,6 +98,7 @@ export function BoardMetrics({ model, captureRef }) {
       tooltipBorder: cssVar('--chart-tooltip-border'),
       tooltipBody: cssVar('--chart-tooltip-body'),
     };
+    const fonts = appFonts();
 
     const labels = model.sprintCumulative.map(s =>
       s.name.length > 14 ? `${s.name.slice(0, 13)}…` : s.name
@@ -159,7 +158,7 @@ export function BoardMetrics({ model, captureRef }) {
             borderColor: palette.tooltipBorder,
             borderWidth: 1,
             bodyColor: palette.tooltipBody,
-            bodyFont: { family: 'DM Mono', size: 12 },
+            bodyFont: { family: fonts.mono, size: 12 },
             callbacks: {
               label: ctx => {
                 const suffix = {
@@ -177,7 +176,7 @@ export function BoardMetrics({ model, captureRef }) {
             grid: { color: palette.grid },
             ticks: {
               color: palette.axis,
-              font: { family: 'DM Mono', size: 10 },
+              font: { family: fonts.mono, size: 10 },
               maxRotation: 35,
             },
           },
@@ -186,14 +185,14 @@ export function BoardMetrics({ model, captureRef }) {
             grid: { color: palette.grid },
             ticks: {
               color: palette.axis,
-              font: { family: 'DM Mono', size: 10 },
+              font: { family: fonts.mono, size: 10 },
               precision: 0,
             },
             title: {
               display: true,
               text: 'Tasks',
               color: palette.axis,
-              font: { family: 'DM Mono', size: 10 },
+              font: { family: fonts.mono, size: 10 },
             },
           },
         },

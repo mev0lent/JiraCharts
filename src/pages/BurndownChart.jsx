@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
-
-function cssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
+import { appFonts, cssVar } from '../lib/theme.js';
 
 const chartAriaByScope = {
   selection: 'Sprint-Burndown: ideale und tatsächliche verbleibende Story Points pro Tag.',
@@ -30,6 +27,7 @@ export function BurndownChart({ state, onResizeReady, scope = 'selection' }) {
       boundaryLabel: cssVar('--chart-boundary-label'),
       axis: cssVar('--muted'),
     };
+    const fonts = appFonts();
 
     const boundaryPlugin = {
       id: 'sprintBoundaries',
@@ -49,7 +47,7 @@ export function BurndownChart({ state, onResizeReady, scope = 'selection' }) {
           ctx.stroke();
           ctx.setLineDash([]);
           ctx.fillStyle = palette.boundaryLabel;
-          ctx.font = '9px DM Mono, monospace';
+          ctx.font = `9px ${fonts.mono}`;
           ctx.textAlign = 'center';
           ctx.fillText(name.length > 14 ? `${name.slice(0, 13)}...` : name, x, ca.top + 10);
           ctx.restore();
@@ -101,8 +99,8 @@ export function BurndownChart({ state, onResizeReady, scope = 'selection' }) {
             borderWidth: 1,
             titleColor: palette.tooltipTitle,
             bodyColor: palette.tooltipBody,
-            titleFont: { family: 'DM Mono', size: 11 },
-            bodyFont: { family: 'DM Mono', size: 12 },
+            titleFont: { family: fonts.mono, size: 11 },
+            bodyFont: { family: fonts.mono, size: 12 },
           },
         },
         scales: {
@@ -110,7 +108,7 @@ export function BurndownChart({ state, onResizeReady, scope = 'selection' }) {
             grid: { color: palette.grid },
             ticks: {
               color: palette.axis,
-              font: { family: 'DM Mono', size: 10 },
+              font: { family: fonts.mono, size: 10 },
               maxRotation: 45,
               autoSkip: true,
               maxTicksLimit: 20,
@@ -119,12 +117,12 @@ export function BurndownChart({ state, onResizeReady, scope = 'selection' }) {
           y: {
             beginAtZero: true,
             grid: { color: palette.grid },
-            ticks: { color: palette.axis, font: { family: 'DM Mono', size: 10 } },
+            ticks: { color: palette.axis, font: { family: fonts.mono, size: 10 } },
             title: {
               display: true,
               text: 'Verbleibende Story Points',
               color: palette.axis,
-              font: { family: 'DM Mono', size: 10 },
+              font: { family: fonts.mono, size: 10 },
             },
           },
         },
