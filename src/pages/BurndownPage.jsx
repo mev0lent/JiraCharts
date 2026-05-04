@@ -561,19 +561,22 @@ export function BurndownPage() {
     writeBooleanStorage(SKIP_WEEKENDS_KEY, value);
   }
 
-  async function exportScreenshot(kind) {
+  async function exportScreenshot(kind, entries) {
     const target =
       kind === 'metrics'
         ? { node: metricsWrapRef.current, filename: 'jira-burndown-kennzahlen.png' }
         : kind === 'canvas'
           ? { node: canvasRef.current, filename: 'jira-burndown-vorgaenge.png' }
           : { node: chartWrapRef.current, filename: 'jira-burndown-chart.png' };
+    const targets = entries?.length ? entries : [target];
 
-    if (!target.node) return;
+    if (!targets.length || targets.some(item => !item.node)) return;
 
     setExporting(kind);
     try {
-      await exportNodeAsPng(target.node, target.filename);
+      for (const item of targets) {
+        await exportNodeAsPng(item.node, item.filename);
+      }
     } catch (err) {
       setStatus({ message: `Screenshot konnte nicht erstellt werden: ${networkMsg(err)}`, type: 'error' });
     } finally {
@@ -763,7 +766,7 @@ export function BurndownPage() {
           <BacklogCanvas
             issues={tableIssues}
             captureRef={canvasRef}
-            onExport={() => exportScreenshot('canvas')}
+            onExport={entries => exportScreenshot('canvas', entries)}
             exporting={exporting === 'canvas'}
           />
         ) : burndownScope !== 'board' && hasViewed && !loading && !metricsModel && !status.message ? (

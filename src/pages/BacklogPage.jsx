@@ -79,11 +79,17 @@ export function BacklogPage() {
     }
   }
 
-  async function exportCanvas() {
-    if (!canvasRef.current) return;
+  async function exportCanvas(entries) {
+    const targets = entries?.length
+      ? entries
+      : [{ node: canvasRef.current, filename: 'jira-backlog-canvas.png' }];
+    if (!targets.length || targets.some(target => !target.node)) return;
+
     setExporting('canvas');
     try {
-      await exportNodeAsPng(canvasRef.current, 'jira-backlog-canvas.png');
+      for (const target of targets) {
+        await exportNodeAsPng(target.node, target.filename);
+      }
     } catch (err) {
       setStatus({ message: `Export fehlgeschlagen: ${networkMsg(err)}`, type: 'error' });
     } finally {

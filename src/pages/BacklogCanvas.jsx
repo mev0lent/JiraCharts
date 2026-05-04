@@ -1,4 +1,9 @@
-import { statusCategory, statusClass, storyPoints } from '../lib/issues.js';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { storyPoints } from '../lib/issues.js';
+
+const CARDS_PER_PAGE = 12;
+const CARDS_PER_ROW = 4;
+const ROWS_PER_FULL_PAGE = 3;
 
 const PRIORITY_COLORS = {
   highest: '#e84d4d',
@@ -47,9 +52,43 @@ function groupByStatus(issues) {
   return order.map(name => ({ name, issues: map.get(name) }));
 }
 
+function pageCount(issues) {
+  return Math.max(1, Math.ceil(issues.length / CARDS_PER_PAGE));
+}
+
+function pagedGroups(groups) {
+  return groups.map(group => ({
+    ...group,
+    pages: Array.from({ length: pageCount(group.issues) }, (_, pageIndex) => (
+      group.issues.slice(
+        pageIndex * CARDS_PER_PAGE,
+        pageIndex * CARDS_PER_PAGE + CARDS_PER_PAGE,
+      )
+    )),
+  }));
+}
+
+function visibleRows(issues) {
+  return Math.max(1, Math.ceil(issues.length / CARDS_PER_ROW));
+}
+
+function cardRowSize(issues) {
+  return visibleRows(issues) >= ROWS_PER_FULL_PAGE ? 'minmax(0, 1fr)' : '172px';
+}
+
+function filenamePart(value) {
+  const normalized = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return normalized || 'status';
+}
+
 function BacklogCard({ issue }) {
   const sp = storyPoints(issue);
-  const cat = statusCategory(issue);
   const priority = issue.fields.priority;
   const assignee = issue.fields.assignee;
   const summary = issue.fields.summary || '-';
@@ -57,7 +96,7 @@ function BacklogCard({ issue }) {
   return (
     <div
       className="backlog-card"
-      style={{ borderLeftColor: priorityColor(priority?.name) }}
+      style={{ '--priority-color': priorityColor(priority?.name) }}
     >
       <div className="backlog-card-top">
         <div className="backlog-card-top-left">
@@ -87,10 +126,110 @@ function BacklogCard({ issue }) {
   );
 }
 
+function BacklogStatePage({ group, pageIssues, pageIndex, pages, onPageChange, exportMode = false }) {
+  return (
+    <div className="backlog-state">
+      <div className="backlog-state-header">
+        <div className="backlog-section-title">
+          {group.name}
+          <span className="backlog-section-count">
+            {pageIssues.length === group.issues.length ? group.issues.length : `${pageIssues.length}/${group.issues.length}`}
+          </span>
+        </div>
+        {!exportMode && pages > 1 && (
+          <div className="backlog-page-controls" data-screenshot-exclude>
+            <button
+              className="ghost backlog-page-button"
+              type="button"
+              aria-label={`Vorherige ${group.name}-Seite`}
+              disabled={pageIndex === 0}
+              onClick={() => onPageChange(pageIndex - 1)}
+            >
+              ←
+            </button>
+            <span className="backlog-page-status">
+              Seite {pageIndex + 1}/{pages}
+            </span>
+            <button
+              className="ghost backlog-page-button"
+              type="button"
+              aria-label={`Nächste ${group.name}-Seite`}
+              disabled={pageIndex === pages - 1}
+              onClick={() => onPageChange(pageIndex + 1)}
+            >
+              →
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="backlog-canvas-scroll">
+        <div className="backlog-canvas">
+          <div
+            className="backlog-section-cards"
+            style={{
+              '--visible-card-rows': visibleRows(pageIssues),
+              '--card-row-size': cardRowSize(pageIssues),
+            }}
+          >
+            {pageIssues.map(issue => (
+              <BacklogCard key={issue.key} issue={issue} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function BacklogCanvas({ issues, captureRef, onExport, exporting }) {
+  const groups = useMemo(() => pagedGroups(groupByStatus(issues)), [issues]);
+  const exportRefs = useRef(new Map());
+  const [pageIndexes, setPageIndexes] = useState({});
+
+  useEffect(() => {
+    setPageIndexes({});
+  }, [issues]);
+
   if (!issues.length) return null;
 
-  const groups = groupByStatus(issues);
+  function pageIndexFor(group) {
+    return Math.min(pageIndexes[group.name] ?? 0, group.pages.length - 1);
+  }
+
+  function setGroupPage(groupName, pageIndex) {
+    setPageIndexes(indexes => ({
+      ...indexes,
+      [groupName]: pageIndex,
+    }));
+  }
+
+  function exportKey(groupName, pageIndex) {
+    return `${groupName}-${pageIndex}`;
+  }
+
+  function setExportRef(groupName, pageIndex, node) {
+    const key = exportKey(groupName, pageIndex);
+    if (node) {
+      exportRefs.current.set(key, node);
+    } else {
+      exportRefs.current.delete(key);
+    }
+  }
+
+  function exportSections() {
+    const entries = groups.flatMap(group => (
+      group.pages.map((_, pageIndex) => ({
+        node: exportRefs.current.get(exportKey(group.name, pageIndex)),
+        filename: [
+          'jira-backlog-vorgaenge',
+          filenamePart(group.name),
+          `seite-${pageIndex + 1}`,
+        ].join('-') + '.png',
+      }))
+    )).filter(entry => entry.node);
+
+    return onExport(entries);
+  }
 
   return (
     <div className="canvas-wrap">
@@ -103,29 +242,48 @@ export function BacklogCanvas({ issues, captureRef, onExport, exporting }) {
               type="button"
               data-screenshot-exclude
               disabled={exporting}
-              onClick={onExport}
+              onClick={exportSections}
             >
-              {exporting ? 'Exportiert…' : 'Exportieren'}
+              {exporting ? 'Exportiert…' : 'Alle Seiten exportieren'}
             </button>
           </div>
         </div>
       )}
-      <div className="backlog-canvas-scroll">
-        <div ref={captureRef} className="backlog-canvas">
-          {groups.map(group => (
-            <div key={group.name} className="backlog-section">
-              <div className="backlog-section-title">
-                {group.name}
-                <span className="backlog-section-count">{group.issues.length}</span>
-              </div>
-              <div className="backlog-section-cards">
-                {group.issues.map(issue => (
-                  <BacklogCard key={issue.key} issue={issue} />
-                ))}
-              </div>
+      <div ref={captureRef} className="backlog-states">
+        {groups.map(group => {
+          const pageIndex = pageIndexFor(group);
+          const pageIssues = group.pages[pageIndex] ?? [];
+
+          return (
+            <BacklogStatePage
+              key={group.name}
+              group={group}
+              pageIssues={pageIssues}
+              pageIndex={pageIndex}
+              pages={group.pages.length}
+              onPageChange={nextPage => setGroupPage(group.name, nextPage)}
+            />
+          );
+        })}
+      </div>
+      <div className="backlog-export-pool" aria-hidden="true">
+        {groups.flatMap(group => (
+          group.pages.map((pageIssues, pageIndex) => (
+            <div
+              key={`${group.name}-${pageIndex}`}
+              ref={node => setExportRef(group.name, pageIndex, node)}
+              className="backlog-export-page"
+            >
+              <BacklogStatePage
+                group={group}
+                pageIssues={pageIssues}
+                pageIndex={pageIndex}
+                pages={group.pages.length}
+                exportMode
+              />
             </div>
-          ))}
-        </div>
+          ))
+        ))}
       </div>
     </div>
   );

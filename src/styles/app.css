@@ -1128,21 +1128,51 @@ th {
   overflow: auto;
 }
 
-.backlog-canvas {
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 22px 24px;
+.backlog-states {
+  display: grid;
   background: var(--bg);
 }
 
-.backlog-section {
+.backlog-export-pool {
+  position: fixed;
+  top: 0;
+  left: -12000px;
+  width: 1036px;
+  pointer-events: none;
+}
+
+.backlog-export-page {
+  width: 1036px;
+  background: var(--bg);
+}
+
+.backlog-export-page .backlog-state + .backlog-state {
+  border-top: 0;
+}
+
+.backlog-state {
+  min-width: 0;
+}
+
+.backlog-state + .backlog-state {
+  border-top: 1px solid var(--border);
+}
+
+.backlog-state-header {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px 0;
+}
+
+.backlog-canvas {
+  aspect-ratio: 16 / 9;
+  min-width: 920px;
+  overflow: hidden;
+  display: grid;
+  padding: 16px 24px 22px;
+  background: var(--bg);
 }
 
 .backlog-section-title {
@@ -1167,23 +1197,25 @@ th {
 }
 
 .backlog-section-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--visible-card-rows), var(--card-row-size));
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
 }
 
 .backlog-card {
-  width: 210px;
-  height: 110px;
-  flex-shrink: 0;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: 9px;
+  padding: 14px 16px 13px;
   border-radius: 6px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left-width: 3px;
+  border-top: 3px solid var(--priority-color);
   overflow: hidden;
 }
 
@@ -1192,6 +1224,8 @@ th {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 18px;
+  flex-shrink: 0;
 }
 
 .backlog-card-top-left {
@@ -1205,21 +1239,27 @@ th {
   font-family: var(--mono);
   font-size: 10px;
   color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .backlog-card-summary {
   flex: 1;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 13px;
+  line-height: 1.35;
   overflow: hidden;
+  overflow-wrap: anywhere;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
 .backlog-card-footer {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .backlog-sp {
@@ -1244,6 +1284,28 @@ th {
   width: 13px;
   height: 13px;
   flex-shrink: 0;
+}
+
+.backlog-page-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.backlog-page-button {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+
+.backlog-page-status {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  min-width: 72px;
+  text-align: center;
 }
 
 /* ── End Backlog Canvas ──────────────────────────────────────────────── */
