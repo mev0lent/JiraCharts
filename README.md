@@ -50,11 +50,16 @@ The proxy forwards Jira API calls server-side, so the browser never hits CORS is
 |-------|--------------|
 | E-Mail | Your Jira account email |
 | API-Token | Your Jira API token (see link below) |
+| Projektschlüssel | Check screenshot |
 
 Get an API token at:
 **https://id.atlassian.com/manage-profile/security/api-tokens**
 
 Check **"Token speichern"** next to the token field if you want it remembered across page reloads.
+
+<img width="151" height="177" alt="image" src="https://github.com/user-attachments/assets/7496708d-5131-4400-a828-807765733e7b" />
+
+"SCRUM" would be your Projektschlüssel
 
 ---
 
