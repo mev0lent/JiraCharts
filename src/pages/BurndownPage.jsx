@@ -331,7 +331,9 @@ export function BurndownPage() {
   const [latestChartArgs, setLatestChartArgs] = useState(null);
   const [hasViewed, setHasViewed] = useState(false);
   const [exporting, setExporting] = useState(null);
+  const [kennzahlenView, setKennzahlenView] = useState('zwischenstand');
   const metricsWrapRef = useRef(null);
+  const progressPanelRef = useRef(null);
   const chartWrapRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -564,7 +566,7 @@ export function BurndownPage() {
   async function exportScreenshot(kind, entries) {
     const target =
       kind === 'metrics'
-        ? { node: metricsWrapRef.current, filename: 'jira-burndown-kennzahlen.png' }
+        ? { node: progressPanelRef.current, filename: 'jira-sprint-fortschritt.png' }
         : kind === 'canvas'
           ? { node: canvasRef.current, filename: 'jira-burndown-vorgaenge.png' }
           : { node: chartWrapRef.current, filename: 'jira-burndown-chart.png' };
@@ -697,6 +699,7 @@ export function BurndownPage() {
                 onSelectedIdsChange={setSelectedIds}
                 includeBacklog={includeBacklog}
                 onIncludeBacklogChange={setIncludeBacklog}
+                disabled
                 primaryAction={
                   <button type="button" disabled={!canView || loading} onClick={viewSelected}>
                     Auswahl anzeigen
@@ -713,20 +716,46 @@ export function BurndownPage() {
           <div className="metrics-section">
             <div className="metrics-section-header">
               <span className="chart-title">Kennzahlen</span>
-              <button
-                className="ghost"
-                type="button"
-                data-screenshot-exclude
-                disabled={exporting !== null}
-                onClick={() => exportScreenshot('metrics')}
-              >
-                {exporting === 'metrics' ? 'Exportiert…' : 'Exportieren'}
-              </button>
+              <div className="toolbar-inline" data-screenshot-exclude>
+                {metricsModel.scope !== 'board' && (
+                  <div className="burndown-scope-toggle">
+                    <button
+                      type="button"
+                      className="burndown-scope-option"
+                      aria-pressed={kennzahlenView === 'zwischenstand'}
+                      onClick={() => setKennzahlenView('zwischenstand')}
+                    >
+                      Zwischenstand
+                    </button>
+                    <button
+                      type="button"
+                      className="burndown-scope-option"
+                      aria-pressed={kennzahlenView === 'sprintende'}
+                      onClick={() => setKennzahlenView('sprintende')}
+                    >
+                      Sprintende
+                    </button>
+                  </div>
+                )}
+                <button
+                  className="ghost"
+                  type="button"
+                  disabled={exporting !== null}
+                  onClick={() => exportScreenshot('metrics')}
+                >
+                  {exporting === 'metrics' ? 'Exportiert…' : 'Exportieren'}
+                </button>
+              </div>
             </div>
             {metricsModel.scope === 'board' ? (
               <BoardMetrics model={metricsModel} captureRef={metricsWrapRef} />
             ) : (
-              <BurndownMetrics model={metricsModel} captureRef={metricsWrapRef} />
+              <BurndownMetrics
+                model={metricsModel}
+                captureRef={metricsWrapRef}
+                progressCaptureRef={progressPanelRef}
+                view={kennzahlenView}
+              />
             )}
           </div>
         ) : null}

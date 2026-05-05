@@ -20,6 +20,7 @@ export function SprintSelector({
   boardScopeMode = false,
   hideBulkSprintToggles = false,
   helperText = '',
+  disabled = false,
 }) {
   const sorted = [...sprints].sort(
     (a, b) =>
@@ -49,10 +50,10 @@ export function SprintSelector({
           {actions}
           {hideBulkSprintToggles ? null : (
             <>
-              <button className="ghost" type="button" onClick={() => toggleAll(true)}>
+              <button className="ghost" type="button" disabled={disabled} onClick={() => toggleAll(true)}>
                 Alle
               </button>
-              <button className="ghost" type="button" onClick={() => toggleAll(false)}>
+              <button className="ghost" type="button" disabled={disabled} onClick={() => toggleAll(false)}>
                 Keine
               </button>
             </>
@@ -70,7 +71,7 @@ export function SprintSelector({
                 type="checkbox"
                 value={sprint.id}
                 checked={checked}
-                disabled={boardScopeMode}
+                disabled={boardScopeMode || disabled}
                 onChange={event => toggleSprint(sprint.id, event.target.checked)}
               />
               <span className="sprint-name">{sprint.name}</span>
@@ -84,6 +85,7 @@ export function SprintSelector({
             <input
               type="checkbox"
               checked={includeBacklog}
+              disabled={disabled}
               onChange={event => onIncludeBacklogChange(event.target.checked)}
             />
             <span className="sprint-name">Backlog</span>
