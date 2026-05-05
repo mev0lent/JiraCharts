@@ -579,7 +579,7 @@ export function BurndownPage() {
   async function exportScreenshot(kind, entries) {
     const target =
       kind === 'metrics'
-        ? { node: progressPanelRef.current, filename: 'jira-sprint-fortschritt.png' }
+        ? { node: (metricsModel?.scope === 'board' ? metricsWrapRef : progressPanelRef).current, filename: 'jira-sprint-fortschritt.png' }
         : kind === 'canvas'
           ? { node: canvasRef.current, filename: 'jira-burndown-vorgaenge.png' }
           : { node: chartWrapRef.current, filename: 'jira-burndown-chart.png' };
