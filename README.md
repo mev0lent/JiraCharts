@@ -143,3 +143,16 @@ npm run dev
 
 Starts the Vite dev server at **http://localhost:5173**.  
 In dev mode the app talks directly to Jira (CORS must be allowed), or you can point it at a running proxy by setting `jiraBase` in `public/config.js`.
+
+---
+
+## Update checks
+
+The app checks GitHub Releases for updates from the shared header. Publish user-facing updates as GitHub Releases in this repository:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The tag version should match the `version` in `package.json`. The checker compares the running app version with the latest release tag, so normal code pushes to `main` do not trigger update notices.

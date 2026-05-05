@@ -61,6 +61,72 @@ header h1 {
   color: var(--muted);
 }
 
+.update-checker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 3px 4px 3px 9px;
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.update-checker__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+
+.update-checker__label {
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.update-checker__label:hover {
+  text-decoration: underline;
+}
+
+.update-checker__refresh {
+  min-height: 20px;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.update-checker__refresh:hover:not(:disabled) {
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.update-checker--available {
+  background: var(--state-backlog-bg);
+  color: var(--warn);
+}
+
+.update-checker--current {
+  background: var(--state-future-bg);
+  color: var(--success);
+}
+
+.update-checker--checking {
+  background: var(--status-info-bg);
+  color: var(--accent2);
+}
+
 .nav-link {
   color: var(--accent2);
   text-decoration: none;
@@ -1090,6 +1156,11 @@ th {
 
   .header-meta {
     justify-content: flex-start;
+  }
+
+  .update-checker {
+    flex-wrap: wrap;
+    white-space: normal;
   }
 
   .config-grid {

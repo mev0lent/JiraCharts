@@ -1,6 +1,9 @@
 export const runtimeConfig = window.__JIRA_CONFIG__ || {};
 export const JIRA_BASE = (runtimeConfig.jiraBase || '').replace(/\/$/, '');
 export const ON_PROXY = Boolean(JIRA_BASE);
+export const APP_VERSION = import.meta.env.VITE_APP_VERSION || '0.0.0';
+export const APP_COMMIT = import.meta.env.VITE_APP_COMMIT || 'unknown';
+export const GITHUB_REPOSITORY = import.meta.env.VITE_GITHUB_REPOSITORY || 'Niclassslua/JiraCharts';
 
 export const SKIP_WEEKENDS_KEY = 'bd_skipWeekends';
 export const BURNDOWN_SCOPE_KEY = 'bd_burndownScope';
