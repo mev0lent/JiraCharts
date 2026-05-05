@@ -181,10 +181,12 @@ function BacklogStatePage({ group, pageIssues, pageIndex, pages, onPageChange, e
   );
 }
 
-export function BacklogCanvas({ issues, captureRef, onExport, exporting }) {
-  const groups = useMemo(() => pagedGroups(groupByStatus(issues)), [issues]);
+export function BacklogCanvas({ issues, captureRef, onExport, exporting, showSubtasks, onShowSubtasksChange }) {
   const exportRefs = useRef(new Map());
   const [pageIndexes, setPageIndexes] = useState({});
+
+  const groups = useMemo(() => pagedGroups(groupByStatus(issues)), [issues]);
+  const canToggleSubtasks = typeof onShowSubtasksChange === 'function';
 
   useEffect(() => {
     setPageIndexes({});
@@ -237,6 +239,16 @@ export function BacklogCanvas({ issues, captureRef, onExport, exporting }) {
         <div className="chart-header">
           <div className="chart-title">Vorgänge</div>
           <div className="toolbar-inline">
+            {canToggleSubtasks ? (
+              <label className="toolbar-checkbox" data-screenshot-exclude>
+                <input
+                  type="checkbox"
+                  checked={Boolean(showSubtasks)}
+                  onChange={e => onShowSubtasksChange(e.target.checked)}
+                />
+                Unteraufgaben anzeigen
+              </label>
+            ) : null}
             <button
               className="ghost"
               type="button"

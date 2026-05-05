@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { AppHeader } from '../components/AppHeader.jsx';
 import { JiraConfigForm } from '../components/JiraConfigForm.jsx';
 import { StatusMessage } from '../components/StatusMessage.jsx';
-import { fetchAllSprints, getBacklogIssues, getBoardId, networkMsg } from '../lib/jira.js';
+import { fetchAllSprints, getBacklogIssues, getBoardId, networkMsg, searchIssues } from '../lib/jira.js';
 import { JIRA_BASE, ON_PROXY, readBooleanStorage, readStorage, writeBooleanStorage, writeStorage } from '../lib/runtime.js';
 import { exportNodeAsPng } from '../lib/screenshot.js';
 import { BacklogCanvas } from './BacklogCanvas.jsx';
@@ -34,6 +34,8 @@ export function BacklogPage() {
   const [backlogIssues, setBacklogIssues] = useState([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [exporting, setExporting] = useState(null);
+  const [showSubtasks, setShowSubtasks] = useState(false);
+  const [subtaskIssues, setSubtaskIssues] = useState([]);
   const canvasRef = useRef(null);
 
   function requireCredentials() {
@@ -55,6 +57,8 @@ export function BacklogPage() {
     saveConfig(config, saveToken);
     setLoading(true);
     setBacklogIssues([]);
+    setSubtaskIssues([]);
+    setShowSubtasks(false);
     setHasLoaded(false);
 
     try {
@@ -76,6 +80,59 @@ export function BacklogPage() {
       setStatus({ message: `Fehler: ${networkMsg(err)}`, type: 'error' });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleShowSubtasks(show) {
+    setShowSubtasks(show);
+    console.info(
+      '[subtasks] checkbox toggled:',
+      show,
+      'backlogIssues count:',
+      backlogIssues.length,
+      'cached subtasks:',
+      subtaskIssues.length,
+    );
+
+    if (!show) {
+      setStatus({ message: '', type: 'info' });
+      return;
+    }
+
+    if (subtaskIssues.length > 0) {
+      console.info('[subtasks] using cached subtasks:', subtaskIssues.length);
+      setStatus({ message: '', type: 'info' });
+      return;
+    }
+
+    const parentKeys = backlogIssues.map(issue => issue.key).filter(Boolean);
+    if (!parentKeys.length) {
+      console.info('[subtasks] no parent issue keys available for subtask search');
+      setStatus({ message: 'Keine Vorgänge für Unteraufgaben-Suche vorhanden.', type: 'info' });
+      return;
+    }
+
+    setStatus({ message: 'Unteraufgaben werden geladen...', type: 'info' });
+    try {
+      const parentList = parentKeys.join(',');
+      console.info('[subtasks] fetching for parents:', parentList.slice(0, 200));
+      const issues = await searchIssues(
+        `parent in (${parentList})`,
+        config,
+        BACKLOG_CANVAS_FIELDS,
+      );
+      console.info('[subtasks] fetched:', issues.length, 'issues', issues.slice(0, 3).map(issue => issue.key));
+      setSubtaskIssues(issues);
+      setStatus({
+        message: issues.length
+          ? `${issues.length} Unteraufgabe${issues.length === 1 ? '' : 'n'} geladen.`
+          : 'Keine Unteraufgaben gefunden.',
+        type: 'info',
+      });
+    } catch (err) {
+      console.info('[subtasks] fetch failed:', networkMsg(err));
+      setStatus({ message: `Unteraufgaben konnten nicht geladen werden: ${networkMsg(err)}`, type: 'error' });
+      setShowSubtasks(false);
     }
   }
 
@@ -142,10 +199,12 @@ export function BacklogPage() {
 
         {backlogIssues.length > 0 ? (
           <BacklogCanvas
-            issues={backlogIssues}
+            issues={showSubtasks ? [...backlogIssues, ...subtaskIssues] : backlogIssues}
             captureRef={canvasRef}
             onExport={exportCanvas}
             exporting={exporting === 'canvas'}
+            showSubtasks={showSubtasks}
+            onShowSubtasksChange={handleShowSubtasks}
           />
         ) : hasLoaded && !loading ? (
           <div className="empty">Keine Vorgänge im Backlog gefunden.</div>

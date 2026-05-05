@@ -14,6 +14,7 @@ import {
   getBoardId,
   getSprintIssues,
   networkMsg,
+  searchIssues,
 } from '../lib/jira.js';
 import {
   BURNDOWN_SCOPE_KEY,
@@ -340,6 +341,8 @@ export function BurndownPage() {
   const [skipWeekends, setSkipWeekends] = useState(() => readBooleanStorage(SKIP_WEEKENDS_KEY, true));
   const [sprintLabel, setSprintLabel] = useState('-');
   const [tableIssues, setTableIssues] = useState([]);
+  const [showSubtasks, setShowSubtasks] = useState(false);
+  const [subtaskIssues, setSubtaskIssues] = useState([]);
   const [latestMetricArgs, setLatestMetricArgs] = useState(null);
   const [latestChartArgs, setLatestChartArgs] = useState(null);
   const [hasViewed, setHasViewed] = useState(false);
@@ -374,6 +377,8 @@ export function BurndownPage() {
   function setScope(next) {
     setBurndownScope(next);
     writeStorage(BURNDOWN_SCOPE_KEY, next);
+    setShowSubtasks(false);
+    setSubtaskIssues([]);
     if (next === 'board') setTableIssues([]);
   }
 
@@ -411,6 +416,8 @@ export function BurndownPage() {
     setSelectedIds([]);
     setIncludeBacklog(false);
     setTableIssues([]);
+    setShowSubtasks(false);
+    setSubtaskIssues([]);
     setLatestMetricArgs(null);
     setLatestChartArgs(null);
     setHasViewed(false);
@@ -441,6 +448,8 @@ export function BurndownPage() {
     setLoading(true);
     setHasViewed(true);
     setTableIssues([]);
+    setShowSubtasks(false);
+    setSubtaskIssues([]);
     setLatestMetricArgs(null);
     setLatestChartArgs(null);
 
@@ -568,6 +577,68 @@ export function BurndownPage() {
       setStatus({ message: `Fehler: ${networkMsg(err)}`, type: 'error' });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleShowSubtasks(show) {
+    setShowSubtasks(show);
+    console.info(
+      '[subtasks] checkbox toggled:',
+      show,
+      'tableIssues count:',
+      tableIssues.length,
+      'cached subtasks:',
+      subtaskIssues.length,
+    );
+
+    if (!show) {
+      setStatus({ message: '', type: 'info' });
+      return;
+    }
+
+    if (subtaskIssues.length > 0) {
+      console.info('[subtasks] using cached subtasks:', subtaskIssues.length);
+      setStatus({ message: '', type: 'info' });
+      return;
+    }
+
+    const existingKeys = new Set(tableIssues.map(issue => issue.key).filter(Boolean));
+    const parentKeys = [...existingKeys];
+    if (!parentKeys.length) {
+      console.info('[subtasks] no parent issue keys available for subtask search');
+      setStatus({ message: 'Keine Vorgänge für Unteraufgaben-Suche vorhanden.', type: 'info' });
+      return;
+    }
+
+    setStatus({ message: 'Unteraufgaben werden geladen...', type: 'info' });
+    try {
+      const parentList = parentKeys.join(',');
+      console.info('[subtasks] fetching for parents:', parentList.slice(0, 200));
+      const issues = await searchIssues(
+        `parent in (${parentList})`,
+        config,
+        SPRINT_FIELDS,
+      );
+      const uniqueSubtasks = issues.filter(issue => issue.key && !existingKeys.has(issue.key));
+      console.info(
+        '[subtasks] fetched:',
+        issues.length,
+        'issues',
+        uniqueSubtasks.length,
+        'new',
+        issues.slice(0, 3).map(issue => issue.key),
+      );
+      setSubtaskIssues(uniqueSubtasks);
+      setStatus({
+        message: uniqueSubtasks.length
+          ? `${uniqueSubtasks.length} Unteraufgabe${uniqueSubtasks.length === 1 ? '' : 'n'} geladen.`
+          : 'Keine Unteraufgaben gefunden.',
+        type: 'info',
+      });
+    } catch (err) {
+      console.info('[subtasks] fetch failed:', networkMsg(err));
+      setStatus({ message: `Unteraufgaben konnten nicht geladen werden: ${networkMsg(err)}`, type: 'error' });
+      setShowSubtasks(false);
     }
   }
 
@@ -806,10 +877,12 @@ export function BurndownPage() {
 
         {hasIssueList ? (
           <BacklogCanvas
-            issues={tableIssues}
+            issues={showSubtasks ? [...tableIssues, ...subtaskIssues] : tableIssues}
             captureRef={canvasRef}
             onExport={entries => exportScreenshot('canvas', entries)}
             exporting={exporting === 'canvas'}
+            showSubtasks={showSubtasks}
+            onShowSubtasksChange={handleShowSubtasks}
           />
         ) : burndownScope !== 'board' && hasViewed && !loading && !metricsModel && !status.message ? (
           <div className="empty">Keine Vorgänge in dieser Auswahl gefunden.</div>

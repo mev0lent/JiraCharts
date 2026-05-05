@@ -59,6 +59,28 @@ export async function getSprintIssues(boardId, sprintId, config, fields) {
 
 const DEFAULT_BACKLOG_FIELDS = 'summary,status,statuscategorychangedate,customfield_10016,customfield_10004,resolutiondate,issuetype';
 
+export async function searchIssues(jql, config, fields) {
+  let issues = [];
+  let nextPageToken = null;
+  for (;;) {
+    const params = new URLSearchParams({
+      jql,
+      maxResults: '50',
+    });
+    if (fields) params.set('fields', fields);
+    if (nextPageToken) params.set('nextPageToken', nextPageToken);
+
+    const data = await jira(
+      `/rest/api/3/search/jql?${params.toString()}`,
+      config,
+    );
+    issues = issues.concat(data.issues || []);
+    if (data.isLast || !data.nextPageToken) break;
+    nextPageToken = data.nextPageToken;
+  }
+  return issues;
+}
+
 export async function getBacklogIssues(boardId, config, fields = DEFAULT_BACKLOG_FIELDS) {
   let start = 0;
   let issues = [];
