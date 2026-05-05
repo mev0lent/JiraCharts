@@ -6,7 +6,7 @@ import { JiraConfigForm } from '../components/JiraConfigForm.jsx';
 import { Legend } from '../components/Legend.jsx';
 import { SprintSelector } from '../components/SprintSelector.jsx';
 import { StatusMessage } from '../components/StatusMessage.jsx';
-import { addDays, addWorkdays, atMidnight, daysBetween, fmtDate, isWeekday } from '../lib/date.js';
+import { addDays, atMidnight, daysBetween, fmtDate, isWeekday } from '../lib/date.js';
 import { completionDate, statusCategory, storyPoints } from '../lib/issues.js';
 import {
   fetchAllSprints,
@@ -146,6 +146,19 @@ function countScheduleDaysAfter(start, end, skipWeekends) {
   return skipWeekends ? days.filter(isWeekday).length : days.length;
 }
 
+function addScheduleDaysInclusive(start, count, skipWeekends) {
+  const days = Math.max(1, count);
+  if (!skipWeekends) return addDays(start, days - 1);
+
+  const date = atMidnight(start);
+  let remaining = days;
+  while (remaining > 0) {
+    if (isWeekday(date)) remaining -= 1;
+    if (remaining > 0) date.setDate(date.getDate() + 1);
+  }
+  return date;
+}
+
 function buildBurndownMetricsModel(args, skipWeekends) {
   if (!args?.issues?.length) return null;
 
@@ -274,7 +287,7 @@ function buildBurndownMetricsModel(args, skipWeekends) {
         };
       } else {
         const daysToFinish = Math.max(1, Math.ceil(workRemaining / throughputRate));
-        const projectedDate = skipWeekends ? addWorkdays(today, daysToFinish) : addDays(today, daysToFinish);
+        const projectedDate = addScheduleDaysInclusive(today, daysToFinish, skipWeekends);
         const finishesOnTime = projectedDate <= chartEnd;
         const bufferDays = finishesOnTime
           ? countScheduleDaysAfter(projectedDate, chartEnd, skipWeekends)
