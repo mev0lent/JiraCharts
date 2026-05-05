@@ -21,6 +21,7 @@ export function SprintSelector({
   hideBulkSprintToggles = false,
   helperText = '',
   disabled = false,
+  singleSelect = false,
 }) {
   const sorted = [...sprints].sort(
     (a, b) =>
@@ -29,8 +30,12 @@ export function SprintSelector({
   );
 
   function toggleSprint(id, checked) {
-    const next = checked ? [...selectedIds, id] : selectedIds.filter(selectedId => selectedId !== id);
-    onSelectedIdsChange([...new Set(next)]);
+    if (singleSelect) {
+      onSelectedIdsChange(checked ? [id] : []);
+    } else {
+      const next = checked ? [...selectedIds, id] : selectedIds.filter(selectedId => selectedId !== id);
+      onSelectedIdsChange([...new Set(next)]);
+    }
   }
 
   function toggleAll(on) {
@@ -38,6 +43,8 @@ export function SprintSelector({
     onSelectedIdsChange(ids);
     if (onIncludeBacklogChange) onIncludeBacklogChange(on);
   }
+
+  const showBulkToggles = !hideBulkSprintToggles && !singleSelect;
 
   return (
     <div className="sprint-selector">
@@ -48,7 +55,7 @@ export function SprintSelector({
         </div>
         <div className="btn-row">
           {actions}
-          {hideBulkSprintToggles ? null : (
+          {showBulkToggles ? (
             <>
               <button className="ghost" type="button" disabled={disabled} onClick={() => toggleAll(true)}>
                 Alle
@@ -57,7 +64,7 @@ export function SprintSelector({
                 Keine
               </button>
             </>
-          )}
+          ) : null}
           {primaryAction}
         </div>
       </div>
@@ -65,10 +72,12 @@ export function SprintSelector({
         {sorted.map(sprint => {
           const hasDates = sprint.startDate && sprint.endDate;
           const checked = boardScopeMode ? Boolean(hasDates) : selectedIds.includes(sprint.id);
+          const inputType = boardScopeMode || !singleSelect ? 'checkbox' : 'radio';
           return (
             <label className={`sprint-item${boardScopeMode ? ' sprint-item-readonly' : ''}`} key={sprint.id}>
               <input
-                type="checkbox"
+                type={inputType}
+                name={singleSelect ? 'sprint-single' : undefined}
                 value={sprint.id}
                 checked={checked}
                 disabled={boardScopeMode || disabled}

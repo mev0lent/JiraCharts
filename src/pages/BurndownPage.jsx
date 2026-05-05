@@ -712,7 +712,7 @@ export function BurndownPage() {
                 onSelectedIdsChange={setSelectedIds}
                 includeBacklog={includeBacklog}
                 onIncludeBacklogChange={setIncludeBacklog}
-                disabled
+                singleSelect
                 primaryAction={
                   <button type="button" disabled={!canView || loading} onClick={viewSelected}>
                     Auswahl anzeigen
