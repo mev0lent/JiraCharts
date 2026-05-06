@@ -6,36 +6,38 @@ const CARDS_PER_ROW = 4;
 const ROWS_PER_FULL_PAGE = 3;
 
 const PRIORITY_COLORS = {
-  highest: '#e84d4d',
-  blocker: '#e84d4d',
-  high: '#f79232',
-  medium: '#f0c518',
-  low: '#2684ff',
-  lowest: '#57d9a3',
-  trivial: '#57d9a3',
+  highest: '#F15B50',
+  blocker: '#F15B50',
+  high: '#E06C00',
+  medium: '#E06C00',
+  low: '#4688EC',
+  lowest: '#4688EC',
+  trivial: '#4688EC',
 };
 
-function svg(color, shape) {
-  return `data:image/svg+xml,${encodeURIComponent(`<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path fill="${color}" d="${shape}"/></svg>`)}`;
+const PUBLIC_ICON_BASE = `${import.meta.env.BASE_URL}icons/`;
+
+const PRIORITY_ICON_FILES = {
+  highest: 'highest.svg',
+  blocker: 'highest.svg',
+  high: 'high.svg',
+  medium: 'medium.svg',
+  low: 'low.svg',
+  lowest: 'lowest.svg',
+  trivial: 'lowest.svg',
+};
+
+function priorityKey(priorityName) {
+  return priorityName ? priorityName.trim().toLowerCase() : '';
 }
 
-const PRIORITY_ICONS = {
-  highest: svg('#e84d4d', 'M8 1 L14 8 H10 V11 H6 V8 H2 Z M8 9 L14 16 H10 V19 H6 V16 H2 Z'),
-  blocker:  svg('#e84d4d', 'M8 1 L14 8 H10 V11 H6 V8 H2 Z M8 9 L14 16 H10 V19 H6 V16 H2 Z'),
-  high:     svg('#f79232', 'M8 1 L15 12 H1 Z'),
-  medium:   svg('#f0c518', 'M1 4 H15 V7 H1 Z M1 9 H15 V12 H1 Z'),
-  low:      svg('#2684ff', 'M8 15 L1 4 H15 Z'),
-  lowest:   svg('#57d9a3', 'M8 8 L1 1 H15 Z M8 15 L1 8 H15 Z'),
-  trivial:  svg('#57d9a3', 'M8 8 L1 1 H15 Z M8 15 L1 8 H15 Z'),
-};
-
 function priorityIconUrl(priorityName) {
-  return priorityName ? (PRIORITY_ICONS[priorityName.toLowerCase()] ?? null) : null;
+  const fileName = PRIORITY_ICON_FILES[priorityKey(priorityName)];
+  return fileName ? `${PUBLIC_ICON_BASE}${fileName}` : null;
 }
 
 function priorityColor(priorityName) {
-  if (!priorityName) return 'var(--border)';
-  return PRIORITY_COLORS[priorityName.toLowerCase()] ?? 'var(--border)';
+  return PRIORITY_COLORS[priorityKey(priorityName)] ?? 'var(--border)';
 }
 
 function groupByStatus(issues) {
@@ -90,6 +92,7 @@ function filenamePart(value) {
 function BacklogCard({ issue }) {
   const sp = storyPoints(issue);
   const priority = issue.fields.priority;
+  const priorityIcon = priorityIconUrl(priority?.name);
   const assignee = issue.fields.assignee;
   const summary = issue.fields.summary || '-';
 
@@ -100,11 +103,11 @@ function BacklogCard({ issue }) {
     >
       <div className="backlog-card-top">
         <div className="backlog-card-top-left">
-          {priority?.name && priorityIconUrl(priority.name) && (
+          {priority?.name && priorityIcon && (
             <>
               <img
                 className="priority-icon"
-                src={priorityIconUrl(priority.name)}
+                src={priorityIcon}
                 alt={priority.name}
                 title={priority.name}
               />
