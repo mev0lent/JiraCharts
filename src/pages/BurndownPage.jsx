@@ -650,7 +650,7 @@ export function BurndownPage() {
   async function exportScreenshot(kind, entries) {
     const target =
       kind === 'metrics'
-        ? { node: (metricsModel?.scope === 'board' ? metricsWrapRef : progressPanelRef).current, filename: 'jira-sprint-fortschritt.png' }
+        ? { node: metricsWrapRef.current, filename: 'jira-sprint-fortschritt.png' }
         : kind === 'canvas'
           ? { node: canvasRef.current, filename: 'jira-burndown-vorgaenge.png' }
           : { node: chartWrapRef.current, filename: 'jira-burndown-chart.png' };
@@ -796,31 +796,11 @@ export function BurndownPage() {
 
         <StatusMessage message={status.message} type={status.type} />
 
-        {metricsModel ? (
+        {metricsModel?.scope === 'board' ? (
           <div className="metrics-section">
             <div className="metrics-section-header">
               <span className="chart-title">Kennzahlen</span>
               <div className="toolbar-inline" data-screenshot-exclude>
-                {metricsModel.scope !== 'board' && (
-                  <div className="burndown-scope-toggle">
-                    <button
-                      type="button"
-                      className="burndown-scope-option"
-                      aria-pressed={kennzahlenView === 'zwischenstand'}
-                      onClick={() => setKennzahlenView('zwischenstand')}
-                    >
-                      Zwischenstand
-                    </button>
-                    <button
-                      type="button"
-                      className="burndown-scope-option"
-                      aria-pressed={kennzahlenView === 'sprintende'}
-                      onClick={() => setKennzahlenView('sprintende')}
-                    >
-                      Sprintende
-                    </button>
-                  </div>
-                )}
                 <button
                   className="ghost"
                   type="button"
@@ -831,24 +811,33 @@ export function BurndownPage() {
                 </button>
               </div>
             </div>
-            {metricsModel.scope === 'board' ? (
-              <BoardMetrics model={metricsModel} captureRef={metricsWrapRef} />
-            ) : (
-              <BurndownMetrics
-                model={metricsModel}
-                captureRef={metricsWrapRef}
-                progressCaptureRef={progressPanelRef}
-                view={kennzahlenView}
-              />
-            )}
+            <BoardMetrics model={metricsModel} captureRef={metricsWrapRef} />
           </div>
         ) : null}
 
         {chartState && metricsModel?.scope !== 'board' ? (
-          <div ref={chartWrapRef} className="chart-wrap">
+          <div ref={chartWrapRef} className="chart-wrap sprint-burndown-split">
             <div className="chart-header">
-              <div className="chart-title">Burndown</div>
+              <div className="chart-title">Sprint-Fortschritt &amp; Burndown</div>
               <div className="toolbar-inline">
+                <div className="burndown-scope-toggle" data-screenshot-exclude>
+                  <button
+                    type="button"
+                    className="burndown-scope-option"
+                    aria-pressed={kennzahlenView === 'zwischenstand'}
+                    onClick={() => setKennzahlenView('zwischenstand')}
+                  >
+                    Zwischenstand
+                  </button>
+                  <button
+                    type="button"
+                    className="burndown-scope-option"
+                    aria-pressed={kennzahlenView === 'sprintende'}
+                    onClick={() => setKennzahlenView('sprintende')}
+                  >
+                    Sprintende
+                  </button>
+                </div>
                 <Legend
                   items={[
                     { label: 'Ideal', style: { background: 'var(--chart-ideal)', borderTop: '2px dashed var(--chart-ideal)' } },
@@ -866,12 +855,57 @@ export function BurndownPage() {
                 </button>
               </div>
             </div>
-            <div className="chart-canvas-wrap">
-              <BurndownChart
-                state={chartState}
-                scope={metricsModel?.scope ?? 'selection'}
-              />
+            <div className="sprint-burndown-body">
+              <div ref={progressPanelRef} className="sprint-progress-col">
+                <div className="sprint-progress-kicker">Sprint-Fortschritt</div>
+                <div className="sprint-progress-pct">{metricsModel.percent}%</div>
+                <div className="sprint-progress-sub">abgeschlossen</div>
+                <div className="sprint-progress-vbar-wrap" aria-label={`${metricsModel.percent}% der Story Points abgeschlossen`}>
+                  <div className="sprint-progress-vbar-fill" style={{ height: `${metricsModel.percent}%` }} />
+                </div>
+                <div className="sprint-progress-anchors">
+                  <div>
+                    <span>Gesamtumfang</span>
+                    <strong>{metricsModel.totalSP} SP</strong>
+                    <small>{metricsModel.totalIssues} {metricsModel.totalIssues === 1 ? 'Vorgang' : 'Vorgänge'}</small>
+                  </div>
+                  <div>
+                    <span>Restarbeit</span>
+                    <strong>{metricsModel.remainingSP} SP</strong>
+                    <small>{metricsModel.remainingIssues} {metricsModel.remainingIssues === 1 ? 'Vorgang offen' : 'Vorgänge offen'}</small>
+                  </div>
+                </div>
+              </div>
+              <div className="sprint-burndown-chart-col">
+                <BurndownChart
+                  state={chartState}
+                  scope={metricsModel?.scope ?? 'selection'}
+                />
+              </div>
             </div>
+          </div>
+        ) : null}
+
+        {metricsModel?.scope !== 'board' && kennzahlenView === 'sprintende' && metricsModel ? (
+          <div className="metrics-section">
+            <div className="metrics-section-header">
+              <span className="chart-title">Kennzahlen</span>
+              <div className="toolbar-inline" data-screenshot-exclude>
+                <button
+                  className="ghost"
+                  type="button"
+                  disabled={exporting !== null}
+                  onClick={() => exportScreenshot('metrics')}
+                >
+                  {exporting === 'metrics' ? 'Exportiert…' : 'Exportieren'}
+                </button>
+              </div>
+            </div>
+            <BurndownMetrics
+              model={metricsModel}
+              captureRef={metricsWrapRef}
+              view="sprintende"
+            />
           </div>
         ) : null}
 

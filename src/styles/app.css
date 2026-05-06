@@ -454,6 +454,22 @@ button:disabled {
   gap: 10px;
 }
 
+.toolbar-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.toolbar-checkbox input {
+  width: auto;
+  flex: 0 0 auto;
+  accent-color: var(--accent);
+}
+
 .metrics-section {
   margin-bottom: 20px;
 }
@@ -1051,6 +1067,117 @@ button:disabled {
   height: 100%;
 }
 
+/* ── Sprint-Fortschritt & Burndown split card ──────────────────────── */
+
+.sprint-burndown-split .chart-header {
+  flex-wrap: wrap;
+}
+
+.sprint-burndown-body {
+  display: grid;
+  grid-template-columns: 172px 1fr;
+  min-height: 420px;
+}
+
+.sprint-progress-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 18px;
+  border-right: 1px solid var(--border);
+  background:
+    linear-gradient(160deg, var(--burndown-progress-glow), transparent 60%),
+    var(--surface);
+}
+
+.sprint-progress-kicker {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sprint-progress-pct {
+  color: var(--text);
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.sprint-progress-sub {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  margin-top: -6px;
+}
+
+.sprint-progress-vbar-wrap {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 60px;
+}
+
+.sprint-progress-vbar-fill {
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+  border-radius: 6px;
+  transition: height 0.4s ease;
+}
+
+.sprint-progress-anchors {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sprint-progress-anchors > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sprint-progress-anchors span {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sprint-progress-anchors strong {
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.sprint-progress-anchors small {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.sprint-burndown-chart-col {
+  padding: 14px;
+  min-width: 0;
+  position: relative;
+}
+
+.sprint-burndown-chart-col canvas {
+  position: absolute;
+  inset: 14px;
+  width: calc(100% - 28px) !important;
+  height: calc(100% - 28px) !important;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -1174,6 +1301,23 @@ th {
   .burndown-progress-panel,
   .burndown-panel {
     min-height: 0;
+  }
+
+  .sprint-burndown-body {
+    grid-template-columns: 1fr;
+  }
+
+  .sprint-progress-col {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sprint-progress-vbar-wrap {
+    display: none;
+  }
+
+  .sprint-burndown-chart-col {
+    min-height: 320px;
   }
 
   .chart-header,
