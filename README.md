@@ -74,17 +74,25 @@ npm run dev
 ```
 
 2. Open **http://localhost:5173/theme-builder.html**.
-3. Pick a font pairing and adjust the four base colours:
+3. Pick a font pairing and adjust the base colours. Use the optional accent and chart controls when you need direct control over highlights or chart series colours.
 
 | Token | Controls |
 |-------|----------|
 | `brand` | Primary chart line, highlights, active states |
 | `paper` | Main surfaces and cards |
 | `ink` | Primary text |
-| `earth` | Muted text, borders, supporting chart colours |
+| `earth` | Muted text, borders, derived supporting colours |
+| `accent` | Optional primary UI accent for buttons, progress bars, and key values |
+| `accent2` | Optional secondary accent used in accent gradients |
+| `chartActual` | Optional burndown/cumulative progress line |
+| `chartIdeal` | Optional ideal/target line |
+| `chartScopeSize` | Optional board scope-size line |
+| `todo` | Optional open/to-do workflow colour |
+| `progress` | Optional in-progress workflow colour |
+| `done` | Optional completed workflow colour |
 
 4. Click **Copy to clipboard**.
-5. Add those generated values as a `theme` property in `proxy.config.json`. Because `proxy.config.json` is JSON, quote the `theme` key as shown below.
+5. Add those generated values as a `theme` property in `proxy.config.json`. Advanced colour keys are only included when you override them. Because `proxy.config.json` is JSON, quote the `theme` key as shown below.
 
 Example:
 
@@ -97,7 +105,14 @@ Example:
     "brand": "#8095ef",
     "paper": "#fffdf2",
     "ink": "#100e0e",
-    "earth": "#6171b6"
+    "earth": "#6171b6",
+    "accent": "#5362a5",
+    "chartActual": "#8095ef",
+    "chartIdeal": "#9ea3b8",
+    "chartScopeSize": "#5f9c66",
+    "todo": "#8c90a6",
+    "progress": "#8095ef",
+    "done": "#5362a5"
   }
 }
 ```
@@ -114,7 +129,14 @@ window.__JIRA_CONFIG__ = {
     brand: "#8095ef",
     paper: "#fffdf2",
     ink: "#100e0e",
-    earth: "#6171b6"
+    earth: "#6171b6",
+    accent: "#5362a5",
+    chartActual: "#8095ef",
+    chartIdeal: "#9ea3b8",
+    chartScopeSize: "#5f9c66",
+    todo: "#8c90a6",
+    progress: "#8095ef",
+    done: "#5362a5"
   }
 };
 ```

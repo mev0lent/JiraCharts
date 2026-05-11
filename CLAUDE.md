@@ -219,18 +219,18 @@ Field lists used:
 
 ## Theming
 
-Four CSS variables drive the entire visual theme:
+Four base theme keys drive the default visual theme:
 
-| Variable | Role |
+| Key | Role |
 |----------|------|
-| `--brand` | Primary accent (charts, highlights, buttons) |
-| `--paper` | Background surfaces |
-| `--ink` | Primary text |
-| `--earth` | Muted text, borders |
+| `brand` | Primary brand colour and derived chart defaults |
+| `paper` | Background surfaces |
+| `ink` | Primary text |
+| `earth` | Muted text, borders, derived supporting colours |
 
 Set via `theme` key in `proxy.config.json` (production) or `public/config.js` (dev). `theme-apply.js` applies them to `:root` before React mounts. Supported fonts: `manrope`, `space-grotesk`, `fraunces`, `bricolage`. `theme-builder.html` is a live preview tool (open with `npm run dev`).
 
-Additional chart-specific variables: `--chart-ideal`, `--chart-actual`, `--chart-actual-fill`, `--chart-grid`, `--chart-boundary`, `--chart-scope-size`, `--todo`, `--progress`, `--done`.
+Optional override keys: `accent`, `accent2`, `chartActual`, `chartIdeal`, `chartScopeSize`, `todo`, `progress`, `done`. These map to CSS variables including `--accent`, `--accent2`, `--chart-ideal`, `--chart-actual`, `--chart-actual-fill`, `--chart-scope-size`, `--todo`, `--progress`, and `--done`.
 
 ## PNG export (`src/lib/screenshot.js`)
 

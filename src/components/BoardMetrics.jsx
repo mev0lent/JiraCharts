@@ -14,8 +14,8 @@ export function BoardMetrics({ model, captureRef }) {
     if (!donutCanvasRef.current) return undefined;
 
     const palette = {
-      done: cssVar('--accent'),
-      inProgress: cssVar('--brand'),
+      done: cssVar('--done'),
+      inProgress: cssVar('--progress'),
       todo: cssVar('--todo'),
       text: cssVar('--text'),
       muted: cssVar('--muted'),
@@ -222,11 +222,11 @@ export function BoardMetrics({ model, captureRef }) {
           </div>
           <div className="board-donut-legend">
             <span>
-              <span className="board-legend-dot" style={{ background: 'var(--accent)' }} />
+              <span className="board-legend-dot" style={{ background: 'var(--done)' }} />
               Erledigt <strong>{model.completedIssues}</strong>
             </span>
             <span>
-              <span className="board-legend-dot" style={{ background: 'var(--brand)' }} />
+              <span className="board-legend-dot" style={{ background: 'var(--progress)' }} />
               In Arbeit <strong>{model.inProgressIssues}</strong>
             </span>
             <span>

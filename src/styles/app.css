@@ -1262,12 +1262,12 @@ th {
 
 .status-done {
   background: var(--state-active-bg);
-  color: var(--accent);
+  color: var(--done);
 }
 
 .status-progress {
-  background: var(--state-backlog-bg);
-  color: var(--warn);
+  background: var(--status-info-bg);
+  color: var(--progress);
 }
 
 .status-todo {

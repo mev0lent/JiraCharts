@@ -42,6 +42,8 @@ $todo: solid-rgb(color.scale($earth, $lightness: 14%, $saturation: -55%));
   --success: #{$success};
   --warn: #{$warning};
   --todo: #{$todo};
+  --progress: #{$brand};
+  --done: #{$earth};
   --button-text: #{solid-rgb(color.mix($paper, $brand, 82%))};
   --status-info-bg: #{rgba($brand, 0.18)};
   --status-info-border: #{rgba($earth, 0.24)};

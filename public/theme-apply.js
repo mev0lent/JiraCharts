@@ -88,7 +88,16 @@
     var todoChartHsl     = scaleHsl(todoHsl, 0.08, 0.04);
     var todoChartRgb     = hslToRgb.apply(null, todoChartHsl);
     var warnRgb          = hslToRgb.apply(null, scaleHsl(earthHsl, 0.08, -0.10));
-    var buttonTextRgb    = mix(paperRgb, brandRgb, 0.82);
+
+    var accentRgb        = colors.accent ? hexToRgb(colors.accent) : earthRgb;
+    var accent2Rgb       = colors.accent2 ? hexToRgb(colors.accent2) : accentStrongRgb;
+    var chartActualRgb   = colors.chartActual ? hexToRgb(colors.chartActual) : brandRgb;
+    var chartIdealRgb    = colors.chartIdeal ? hexToRgb(colors.chartIdeal) : todoChartRgb;
+    var chartScopeRgb    = colors.chartScopeSize ? hexToRgb(colors.chartScopeSize) : mix(success, earthRgb, 0.58);
+    var workflowTodoRgb  = colors.todo ? hexToRgb(colors.todo) : todoRgb;
+    var progressRgb      = colors.progress ? hexToRgb(colors.progress) : brandRgb;
+    var doneRgb          = colors.done ? hexToRgb(colors.done) : accentRgb;
+    var buttonTextRgb    = mix(paperRgb, accentRgb, 0.82);
 
     var h = rgbToHex;
     return {
@@ -100,44 +109,47 @@
       '--border2':                    rgba(earthRgb, 0.22),
       '--text':                       colors.ink,
       '--muted':                      h.apply(null, mutedRgb),
-      '--accent':                     colors.earth,
-      '--accent2':                    h.apply(null, accentStrongRgb),
+      '--accent':                     h.apply(null, accentRgb),
+      '--accent2':                    h.apply(null, accent2Rgb),
       '--brand':                      colors.brand,
       '--brand-soft':                 rgba(brandRgb, 0.22),
       '--danger':                     '#862222',
       '--success':                    '#349028',
       '--warn':                       h.apply(null, warnRgb),
-      '--todo':                       h.apply(null, todoRgb),
+      '--todo':                       h.apply(null, workflowTodoRgb),
+      '--progress':                   h.apply(null, progressRgb),
+      '--done':                       h.apply(null, doneRgb),
       '--button-text':                h.apply(null, buttonTextRgb),
-      '--status-info-bg':             rgba(brandRgb, 0.18),
+      '--status-info-bg':             rgba(progressRgb, 0.18),
       '--status-info-border':         rgba(earthRgb, 0.24),
       '--status-error-bg':            rgba(danger, 0.10),
       '--status-error-border':        rgba(danger, 0.20),
-      '--state-active-bg':            rgba(brandRgb, 0.24),
-      '--state-closed-bg':            rgba(todoRgb, 0.15),
+      '--state-active-bg':            rgba(doneRgb, 0.18),
+      '--state-closed-bg':            rgba(workflowTodoRgb, 0.15),
       '--state-future-bg':            rgba(success, 0.12),
       '--state-backlog-bg':           rgba(warnRgb, 0.13),
-      '--hover-overlay':              rgba(brandRgb, 0.16),
+      '--hover-overlay':              rgba(accentRgb, 0.16),
       '--chart-grid':                 rgba(chromeRgb, 0.10),
       '--chart-tooltip-bg':           colors.paper,
       '--chart-tooltip-border':       rgba(chromeRgb, 0.22),
-      '--chart-tooltip-title':        h.apply(null, mix(inkRgb, todoRgb, 0.25)),
+      '--chart-tooltip-title':        h.apply(null, mix(inkRgb, workflowTodoRgb, 0.25)),
       '--chart-tooltip-body':         colors.ink,
-      '--chart-ideal':                h.apply(null, todoChartRgb),
-      '--chart-actual':               colors.brand,
-      '--chart-actual-fill':          rgba(brandRgb, 0.18),
+      '--chart-ideal':                h.apply(null, chartIdealRgb),
+      '--chart-actual':               h.apply(null, chartActualRgb),
+      '--chart-actual-fill':          rgba(chartActualRgb, 0.18),
+      '--chart-scope-size':           h.apply(null, chartScopeRgb),
       '--chart-boundary':             rgba(chromeRgb, 0.24),
       '--chart-boundary-label':       rgba(inkRgb, 0.58),
-      '--metric-topline':             rgba(mix(paperRgb, brandRgb, 0.82), 0.72),
+      '--metric-topline':             rgba(mix(paperRgb, accentRgb, 0.82), 0.72),
       '--metric-shadow':              rgba(chromeRgb, 0.10),
-      '--metric-chip-bg':             rgba(brandRgb, 0.18),
+      '--metric-chip-bg':             rgba(accentRgb, 0.18),
       '--metric-chip-border':         rgba(chromeRgb, 0.18),
       '--metric-chip-text':           h.apply(null, mix(chromeRgb, inkRgb, 0.78)),
-      '--metric-neutral-orb':         rgba(todoRgb, 0.13),
-      '--metric-info-orb':            rgba(brandRgb, 0.18),
-      '--metric-accent-orb':          rgba(brandRgb, 0.28),
+      '--metric-neutral-orb':         rgba(workflowTodoRgb, 0.13),
+      '--metric-info-orb':            rgba(progressRgb, 0.18),
+      '--metric-accent-orb':          rgba(accentRgb, 0.28),
       '--metric-success-orb':         rgba(success, 0.14),
-      '--burndown-progress-glow':     rgba(brandRgb, 0.22),
+      '--burndown-progress-glow':     rgba(accentRgb, 0.22),
       '--burndown-forecast-good-border': rgba(success, 0.30),
       '--burndown-forecast-risk-border': rgba(danger, 0.28),
     };
@@ -191,10 +203,18 @@
     }
 
     var colors = {
-      brand: theme.brand || '#8095EF',
-      paper: theme.paper || '#fffdf2',
-      ink:   theme.ink   || '#100e0e',
-      earth: theme.earth || '#6171b6',
+      brand:          theme.brand || '#8095EF',
+      paper:          theme.paper || '#fffdf2',
+      ink:            theme.ink   || '#100e0e',
+      earth:          theme.earth || '#6171b6',
+      accent:         theme.accent,
+      accent2:        theme.accent2,
+      chartActual:    theme.chartActual,
+      chartIdeal:     theme.chartIdeal,
+      chartScopeSize: theme.chartScopeSize,
+      todo:           theme.todo,
+      progress:       theme.progress,
+      done:           theme.done,
     };
     var vars = colorPalette(colors);
     for (var k in vars) {
