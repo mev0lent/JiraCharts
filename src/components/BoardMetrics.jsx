@@ -101,7 +101,7 @@ export function BoardMetrics({ model, captureRef }) {
     const fonts = appFonts();
 
     const labels = model.sprintCumulative.map(s =>
-      s.name.length > 14 ? `${s.name.slice(0, 13)}…` : s.name
+      s.name.length > 18 ? `${s.name.slice(0, 17)}…` : s.name
     );
     const cumData = model.sprintCumulative.map(s => s.cumCompleted);
     const totalLine = model.sprintCumulative.map(() => model.totalIssues);
