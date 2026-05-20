@@ -2,6 +2,8 @@
 
 Sprint burndown charts and backlog visualisations for Jira Cloud.
 
+<img width="3300" height="1614" alt="jira-burndown-chart-12" src="https://github.com/user-attachments/assets/33563ff2-cc3e-41b2-be0b-d6d11749d7aa" />
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 18 or later
