@@ -1055,6 +1055,7 @@ button:disabled {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .chart-canvas-wrap {
@@ -1474,6 +1475,8 @@ th {
 .backlog-card-footer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -1483,6 +1486,7 @@ th {
   font-weight: 500;
   color: var(--accent);
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .backlog-assignee {
@@ -1499,6 +1503,22 @@ th {
   width: 13px;
   height: 13px;
   flex-shrink: 0;
+}
+
+.issue-type-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.backlog-issue-type-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .backlog-page-controls {

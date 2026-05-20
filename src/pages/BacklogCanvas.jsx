@@ -95,6 +95,7 @@ function BacklogCard({ issue }) {
   const priorityIcon = priorityIconUrl(priority?.name);
   const assignee = issue.fields.assignee;
   const summary = issue.fields.summary || '-';
+  const issueType = issue.fields.issuetype;
 
   return (
     <div
@@ -103,26 +104,36 @@ function BacklogCard({ issue }) {
     >
       <div className="backlog-card-top">
         <div className="backlog-card-top-left">
-          {priority?.name && priorityIcon && (
+          {issueType?.iconUrl && (
             <>
               <img
-                className="priority-icon"
-                src={priorityIcon}
-                alt={priority.name}
-                title={priority.name}
+                className="issue-type-icon"
+                src={issueType.iconUrl}
+                alt={issueType.name}
+                title={issueType.name}
               />
-              <span className="backlog-priority-label">{priority.name}</span>
+              <span className="backlog-issue-type-label">{issueType.name}</span>
             </>
           )}
         </div>
-        {sp != null && <span className="backlog-sp">{sp}</span>}
+        {priority?.name && priorityIcon && (
+          <img
+            className="priority-icon"
+            src={priorityIcon}
+            alt={priority.name}
+            title={priority.name}
+          />
+        )}
       </div>
       <div className="backlog-card-summary">{summary}</div>
-      {assignee && (
+      {(assignee || sp != null) && (
         <div className="backlog-card-footer">
-          <span className="backlog-assignee" title={assignee.displayName}>
-            {assignee.displayName}
-          </span>
+          {assignee && (
+            <span className="backlog-assignee" title={assignee.displayName}>
+              {assignee.displayName}
+            </span>
+          )}
+          {sp != null && <span className="backlog-sp">{sp} SP</span>}
         </div>
       )}
     </div>
