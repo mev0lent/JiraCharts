@@ -687,7 +687,7 @@ export function BurndownPage() {
     setExporting(kind);
     try {
       for (const item of targets) {
-        await exportNodeAsPng(item.node, item.filename);
+        await exportNodeAsPng(item.node, item.filename, { proxyBase: JIRA_BASE });
       }
     } catch (err) {
       setStatus({ message: `Screenshot konnte nicht erstellt werden: ${networkMsg(err)}`, type: 'error' });

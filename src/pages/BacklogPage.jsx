@@ -145,7 +145,7 @@ export function BacklogPage() {
     setExporting('canvas');
     try {
       for (const target of targets) {
-        await exportNodeAsPng(target.node, target.filename);
+        await exportNodeAsPng(target.node, target.filename, { proxyBase: JIRA_BASE });
       }
     } catch (err) {
       setStatus({ message: `Export fehlgeschlagen: ${networkMsg(err)}`, type: 'error' });

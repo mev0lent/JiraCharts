@@ -3,6 +3,8 @@ import { appFonts, cssVar, DEFAULT_SANS_FONT } from './theme.js';
 
 const DEFAULT_PADDING = 32;
 const DEFAULT_PIXEL_RATIO = 3;
+// Fallback for external images that can't be fetched (e.g. CORS-blocked Jira avatars)
+const TRANSPARENT_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII=';
 const CANVAS_READY_TIMEOUT = 1200;
 const IMAGE_READY_TIMEOUT = 1200;
 const SCREENSHOT_EXCLUDE_SELECTOR = '[data-screenshot-exclude]';
@@ -307,6 +309,31 @@ async function screenshotFontCss() {
   return fontCssCache.promise;
 }
 
+async function inlineExternalImages(node, proxyBase) {
+  const images = Array.from(node.querySelectorAll('img[src]'));
+  const restores = [];
+
+  await Promise.all(images.map(async img => {
+    const src = img.getAttribute('src');
+    if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
+
+    // Rewrite absolute Jira URLs to same-origin proxy paths so the browser can fetch them.
+    const fetchUrl = (proxyBase && src.startsWith(proxyBase)) ? src.slice(proxyBase.length) || '/' : src;
+
+    try {
+      const response = await fetch(fetchUrl);
+      if (!response.ok) return;
+      const dataUrl = await blobToDataUrl(await response.blob());
+      restores.push({ img, src });
+      img.setAttribute('src', dataUrl);
+    } catch {
+      // Leave as-is; toCanvas will substitute imagePlaceholder.
+    }
+  }));
+
+  return () => restores.forEach(({ img, src }) => img.setAttribute('src', src));
+}
+
 export async function exportNodeAsPng(node, filename, options = {}) {
   if (!node) return;
 
@@ -330,18 +357,21 @@ export async function exportNodeAsPng(node, filename, options = {}) {
     const canvases = await readyCanvases(node);
     const captureSize = nodeCaptureSize(node);
     const snapshots = canvasSnapshots(node);
+    const restoreImages = await inlineExternalImages(node, options.proxyBase || '');
     const canvas = await withCanvasImages(canvases, () =>
       toCanvas(node, {
         backgroundColor,
         cacheBust: true,
         filter: childNode => includeScreenshotNode(childNode, options.filter),
         fontEmbedCSS,
+        imagePlaceholder: TRANSPARENT_PNG,
         pixelRatio,
         preferredFontFormat: 'woff2',
         style: {
           fontFamily: fonts.sans || DEFAULT_SANS_FONT,
         },
       }));
+    restoreImages();
     drawCanvasSnapshots(canvas, snapshots, captureSize);
 
     const paddedCanvas = document.createElement('canvas');
