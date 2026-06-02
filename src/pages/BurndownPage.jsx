@@ -26,6 +26,7 @@ import {
   readBooleanStorage,
   readStorage,
   SKIP_WEEKENDS_KEY,
+  SMOOTH_BURNDOWN_KEY,
   writeBooleanStorage,
   writeStorage,
 } from '../lib/runtime.js';
@@ -86,7 +87,7 @@ function saveConfig(config, saveToken) {
   writeStorage('bd_token', saveToken ? config.token.trim() : '');
 }
 
-function buildBurndownState(args, skipWeekends, excludedRanges) {
+function buildBurndownState(args, skipWeekends, excludedRanges, smooth = false) {
   if (!args?.selSprints?.length) return null;
 
   const { selSprints, completedIssues, totalSP } = args;
@@ -104,9 +105,29 @@ function buildBurndownState(args, skipWeekends, excludedRanges) {
   if (excludedRanges?.length) days = days.filter(d => !isExcluded(d, excludedRanges));
   const n = Math.max(1, days.length - 1);
   const ideal = days.map((_, i) => Math.max(0, Math.round(totalSP - (totalSP * i) / n)));
+
+  let effectiveCompleted = completedIssues;
+  if (smooth) {
+    const pastDays = days.filter(d => d <= today);
+    if (pastDays.length > 1) {
+      const withDate = [...completedIssues]
+        .filter(i => i.doneDate)
+        .sort((a, b) => a.doneDate - b.doneDate);
+      const m = pastDays.length;
+      const smoothed = withDate.map((issue, idx) => {
+        const dayIdx = Math.min(Math.floor(((idx + 1) * m) / withDate.length) - 1, m - 1);
+        return { ...issue, doneDate: pastDays[Math.max(0, dayIdx)] };
+      });
+      effectiveCompleted = [
+        ...smoothed,
+        ...completedIssues.filter(i => !i.doneDate),
+      ];
+    }
+  }
+
   const actual = days.map(day => {
     if (day > today) return null;
-    return totalSP - completedIssues.filter(issue => issue.doneDate && issue.doneDate <= day).reduce((sum, issue) => sum + issue.sp, 0);
+    return totalSP - effectiveCompleted.filter(issue => issue.doneDate && issue.doneDate <= day).reduce((sum, issue) => sum + issue.sp, 0);
   });
   const labels = days.map(day => day.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' }));
   const boundaries = selSprints
@@ -342,6 +363,7 @@ export function BurndownPage() {
   const [projectEndDate, setProjectEndDate] = useState(readProjectEnd);
   const [showScopeSizeLine, setShowScopeSizeLine] = useState(() => readBooleanStorage(BURNDOWN_SCOPE_SIZE_KEY, false));
   const [skipWeekends, setSkipWeekends] = useState(() => readBooleanStorage(SKIP_WEEKENDS_KEY, true));
+  const [smoothBurndown, setSmoothBurndown] = useState(() => readBooleanStorage(SMOOTH_BURNDOWN_KEY, false));
   const [excludedRanges, setExcludedRanges] = useState(() => {
     try { return JSON.parse(readStorage(EXCLUDED_RANGES_KEY, '[]')) || []; } catch { return []; }
   });
@@ -360,8 +382,8 @@ export function BurndownPage() {
   const canvasRef = useRef(null);
 
   const chartState = useMemo(
-    () => buildBurndownState(latestChartArgs, skipWeekends, excludedRanges),
-    [latestChartArgs, skipWeekends, excludedRanges],
+    () => buildBurndownState(latestChartArgs, skipWeekends, excludedRanges, smoothBurndown),
+    [latestChartArgs, skipWeekends, excludedRanges, smoothBurndown],
   );
   const metricsModel = useMemo(
     () => buildBurndownMetricsModel(
@@ -399,6 +421,11 @@ export function BurndownPage() {
   function updateShowScopeSizeLine(value) {
     setShowScopeSizeLine(value);
     writeBooleanStorage(BURNDOWN_SCOPE_SIZE_KEY, value);
+  }
+
+  function updateSmoothBurndown(value) {
+    setSmoothBurndown(value);
+    writeBooleanStorage(SMOOTH_BURNDOWN_KEY, value);
   }
 
   function requireCredentials() {
@@ -903,6 +930,16 @@ export function BurndownPage() {
                     { label: 'Ist', style: { background: 'var(--chart-actual)' } },
                   ]}
                 />
+                <button
+                  type="button"
+                  className="ghost"
+                  aria-pressed={smoothBurndown}
+                  data-screenshot-exclude
+                  title="Abschlüsse gleichmäßig über den Sprintverlauf verteilen"
+                  onClick={() => updateSmoothBurndown(!smoothBurndown)}
+                >
+                  Glättung
+                </button>
                 <button
                   className="ghost"
                   type="button"

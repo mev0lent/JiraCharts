@@ -388,6 +388,12 @@ button:disabled {
   color: var(--text);
 }
 
+.ghost[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--accent2);
+  border-color: var(--accent2);
+}
+
 .burndown-scope-toggle .burndown-scope-option {
   background: transparent;
   color: var(--muted);

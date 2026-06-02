@@ -10,6 +10,7 @@ export const BURNDOWN_SCOPE_KEY = 'bd_burndownScope';
 export const BURNDOWN_PROJECT_END_KEY = 'bd_burndownProjectEnd';
 export const BURNDOWN_SCOPE_SIZE_KEY = 'bd_showScopeSizeLine';
 export const EXCLUDED_RANGES_KEY = 'bd_excludedRanges';
+export const SMOOTH_BURNDOWN_KEY = 'bd_smoothBurndown';
 
 export function readStorage(key, fallback = '') {
   try {
