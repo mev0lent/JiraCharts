@@ -34,6 +34,17 @@ export function isWeekday(d) {
   return d.getDay() !== 0 && d.getDay() !== 6;
 }
 
+export function isExcluded(d, excludedRanges) {
+  if (!excludedRanges?.length) return false;
+  const ts = atMidnight(d).getTime();
+  return excludedRanges.some(({ from, to }) => {
+    if (!from || !to) return false;
+    const [fy, fm, fd] = from.split('-').map(Number);
+    const [ty, tm, td] = to.split('-').map(Number);
+    return ts >= new Date(fy, fm - 1, fd).getTime() && ts <= new Date(ty, tm - 1, td).getTime();
+  });
+}
+
 export function addWorkdays(date, n) {
   const d = new Date(date);
   let remaining = n;

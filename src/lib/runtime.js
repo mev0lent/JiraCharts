@@ -9,6 +9,7 @@ export const SKIP_WEEKENDS_KEY = 'bd_skipWeekends';
 export const BURNDOWN_SCOPE_KEY = 'bd_burndownScope';
 export const BURNDOWN_PROJECT_END_KEY = 'bd_burndownProjectEnd';
 export const BURNDOWN_SCOPE_SIZE_KEY = 'bd_showScopeSizeLine';
+export const EXCLUDED_RANGES_KEY = 'bd_excludedRanges';
 
 export function readStorage(key, fallback = '') {
   try {

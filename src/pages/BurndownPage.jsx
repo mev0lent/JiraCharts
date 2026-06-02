@@ -6,7 +6,7 @@ import { JiraConfigForm } from '../components/JiraConfigForm.jsx';
 import { Legend } from '../components/Legend.jsx';
 import { SprintSelector } from '../components/SprintSelector.jsx';
 import { StatusMessage } from '../components/StatusMessage.jsx';
-import { addDays, atMidnight, daysBetween, fmtDate, isWeekday } from '../lib/date.js';
+import { addDays, atMidnight, daysBetween, fmtDate, isExcluded, isWeekday } from '../lib/date.js';
 import { completionDate, statusCategory, storyPoints } from '../lib/issues.js';
 import {
   fetchAllSprints,
@@ -20,6 +20,7 @@ import {
   BURNDOWN_SCOPE_KEY,
   BURNDOWN_PROJECT_END_KEY,
   BURNDOWN_SCOPE_SIZE_KEY,
+  EXCLUDED_RANGES_KEY,
   JIRA_BASE,
   ON_PROXY,
   readBooleanStorage,
@@ -85,7 +86,7 @@ function saveConfig(config, saveToken) {
   writeStorage('bd_token', saveToken ? config.token.trim() : '');
 }
 
-function buildBurndownState(args, skipWeekends) {
+function buildBurndownState(args, skipWeekends, excludedRanges) {
   if (!args?.selSprints?.length) return null;
 
   const { selSprints, completedIssues, totalSP } = args;
@@ -100,6 +101,7 @@ function buildBurndownState(args, skipWeekends) {
 
   let days = daysBetween(chartStart, chartEnd);
   if (skipWeekends) days = days.filter(isWeekday);
+  if (excludedRanges?.length) days = days.filter(d => !isExcluded(d, excludedRanges));
   const n = Math.max(1, days.length - 1);
   const ideal = days.map((_, i) => Math.max(0, Math.round(totalSP - (totalSP * i) / n)));
   const actual = days.map(day => {
@@ -135,32 +137,33 @@ function plural(value, singular, pluralLabel = `${singular}s`) {
   return `${value} ${value === 1 ? singular : pluralLabel}`;
 }
 
-function countScheduleDays(start, end, skipWeekends) {
+function isScheduleDay(d, skipWeekends, excludedRanges) {
+  if (skipWeekends && !isWeekday(d)) return false;
+  if (isExcluded(d, excludedRanges)) return false;
+  return true;
+}
+
+function countScheduleDays(start, end, skipWeekends, excludedRanges) {
   if (!start || !end || end < start) return 0;
-  const days = daysBetween(start, end);
-  return skipWeekends ? days.filter(isWeekday).length : days.length;
+  return daysBetween(start, end).filter(d => isScheduleDay(d, skipWeekends, excludedRanges)).length;
 }
 
-function countScheduleDaysAfter(start, end, skipWeekends) {
+function countScheduleDaysAfter(start, end, skipWeekends, excludedRanges) {
   if (!start || !end || end <= start) return 0;
-  const days = daysBetween(start, end).filter(day => day > start);
-  return skipWeekends ? days.filter(isWeekday).length : days.length;
+  return daysBetween(start, end).filter(d => d > start && isScheduleDay(d, skipWeekends, excludedRanges)).length;
 }
 
-function addScheduleDaysInclusive(start, count, skipWeekends) {
-  const days = Math.max(1, count);
-  if (!skipWeekends) return addDays(start, days - 1);
-
+function addScheduleDaysInclusive(start, count, skipWeekends, excludedRanges) {
   const date = atMidnight(start);
-  let remaining = days;
+  let remaining = Math.max(1, count);
   while (remaining > 0) {
-    if (isWeekday(date)) remaining -= 1;
+    if (isScheduleDay(date, skipWeekends, excludedRanges)) remaining -= 1;
     if (remaining > 0) date.setDate(date.getDate() + 1);
   }
   return date;
 }
 
-function buildBurndownMetricsModel(args, skipWeekends) {
+function buildBurndownMetricsModel(args, skipWeekends, excludedRanges) {
   if (!args?.issues?.length) return null;
 
   const { issues, selSprints } = args;
@@ -228,9 +231,9 @@ function buildBurndownMetricsModel(args, skipWeekends) {
     const overrideEnd = args?.endDateOverride ? atMidnight(args.endDateOverride) : null;
     const chartEnd = overrideEnd && overrideEnd > chartStart ? overrideEnd : sprintEnd;
     const elapsedEnd = today < chartStart ? null : today > chartEnd ? chartEnd : today;
-    const elapsedDays = elapsedEnd ? countScheduleDays(chartStart, elapsedEnd, skipWeekends) : 0;
+    const elapsedDays = elapsedEnd ? countScheduleDays(chartStart, elapsedEnd, skipWeekends, excludedRanges) : 0;
     const remainingStart = today < chartStart ? chartStart : today;
-    const remainingDays = today > chartEnd ? 0 : countScheduleDays(remainingStart, chartEnd, skipWeekends);
+    const remainingDays = today > chartEnd ? 0 : countScheduleDays(remainingStart, chartEnd, skipWeekends, excludedRanges);
     const throughputRate = elapsedDays > 0 ? workCompleted / elapsedDays : null;
     const requiredRate = workRemaining > 0 && remainingDays > 0 ? workRemaining / remainingDays : null;
 
@@ -288,11 +291,11 @@ function buildBurndownMetricsModel(args, skipWeekends) {
         };
       } else {
         const daysToFinish = Math.max(1, Math.ceil(workRemaining / throughputRate));
-        const projectedDate = addScheduleDaysInclusive(today, daysToFinish, skipWeekends);
+        const projectedDate = addScheduleDaysInclusive(today, daysToFinish, skipWeekends, excludedRanges);
         const finishesOnTime = projectedDate <= chartEnd;
         const bufferDays = finishesOnTime
-          ? countScheduleDaysAfter(projectedDate, chartEnd, skipWeekends)
-          : countScheduleDaysAfter(chartEnd, projectedDate, skipWeekends);
+          ? countScheduleDaysAfter(projectedDate, chartEnd, skipWeekends, excludedRanges)
+          : countScheduleDaysAfter(chartEnd, projectedDate, skipWeekends, excludedRanges);
         forecast = {
           value: fmtDate(projectedDate),
           detail: requiredDetail,
@@ -339,6 +342,9 @@ export function BurndownPage() {
   const [projectEndDate, setProjectEndDate] = useState(readProjectEnd);
   const [showScopeSizeLine, setShowScopeSizeLine] = useState(() => readBooleanStorage(BURNDOWN_SCOPE_SIZE_KEY, false));
   const [skipWeekends, setSkipWeekends] = useState(() => readBooleanStorage(SKIP_WEEKENDS_KEY, true));
+  const [excludedRanges, setExcludedRanges] = useState(() => {
+    try { return JSON.parse(readStorage(EXCLUDED_RANGES_KEY, '[]')) || []; } catch { return []; }
+  });
   const [sprintLabel, setSprintLabel] = useState('-');
   const [tableIssues, setTableIssues] = useState([]);
   const [showSubtasks, setShowSubtasks] = useState(false);
@@ -354,8 +360,8 @@ export function BurndownPage() {
   const canvasRef = useRef(null);
 
   const chartState = useMemo(
-    () => buildBurndownState(latestChartArgs, skipWeekends),
-    [latestChartArgs, skipWeekends],
+    () => buildBurndownState(latestChartArgs, skipWeekends, excludedRanges),
+    [latestChartArgs, skipWeekends, excludedRanges],
   );
   const metricsModel = useMemo(
     () => buildBurndownMetricsModel(
@@ -363,8 +369,9 @@ export function BurndownPage() {
         ? { ...latestMetricArgs, showScopeSizeLine: latestMetricArgs.scope === 'board' && showScopeSizeLine }
         : latestMetricArgs,
       skipWeekends,
+      excludedRanges,
     ),
-    [latestMetricArgs, skipWeekends, showScopeSizeLine],
+    [latestMetricArgs, skipWeekends, showScopeSizeLine, excludedRanges],
   );
 
   const datedSprintsOnBoard = useMemo(() => datedSprintsSorted(sprints), [sprints]);
@@ -647,6 +654,25 @@ export function BurndownPage() {
     writeBooleanStorage(SKIP_WEEKENDS_KEY, value);
   }
 
+  function addExcludedRange() {
+    const today = new Date().toISOString().slice(0, 10);
+    const next = [...excludedRanges, { from: today, to: today }];
+    setExcludedRanges(next);
+    writeStorage(EXCLUDED_RANGES_KEY, JSON.stringify(next));
+  }
+
+  function updateExcludedRange(index, key, value) {
+    const next = excludedRanges.map((r, i) => i === index ? { ...r, [key]: value } : r);
+    setExcludedRanges(next);
+    writeStorage(EXCLUDED_RANGES_KEY, JSON.stringify(next));
+  }
+
+  function removeExcludedRange(index) {
+    const next = excludedRanges.filter((_, i) => i !== index);
+    setExcludedRanges(next);
+    writeStorage(EXCLUDED_RANGES_KEY, JSON.stringify(next));
+  }
+
   async function exportScreenshot(kind, entries) {
     const target =
       kind === 'metrics'
@@ -790,6 +816,39 @@ export function BurndownPage() {
                   </button>
                 }
               />
+            )}
+            {burndownScope !== 'board' && (
+              <div className="excluded-ranges-panel">
+                <div className="excluded-ranges-header">
+                  <span className="config-title">Ausschlüsse</span>
+                  <button type="button" className="ghost excluded-ranges-add" onClick={addExcludedRange}>
+                    + Zeitraum
+                  </button>
+                </div>
+                {excludedRanges.map((range, i) => (
+                  <div key={i} className="excluded-range-row">
+                    <input
+                      type="date"
+                      value={range.from}
+                      onChange={e => updateExcludedRange(i, 'from', e.target.value)}
+                    />
+                    <span className="excluded-range-sep">bis</span>
+                    <input
+                      type="date"
+                      value={range.to}
+                      onChange={e => updateExcludedRange(i, 'to', e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="ghost excluded-range-remove"
+                      onClick={() => removeExcludedRange(i)}
+                      aria-label="Zeitraum entfernen"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </>
         ) : null}

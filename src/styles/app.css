@@ -189,6 +189,54 @@ header h1 {
   margin-bottom: 0;
 }
 
+.excluded-ranges-panel {
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.excluded-ranges-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.excluded-ranges-add {
+  font-size: 12px;
+  padding: 3px 8px;
+  min-height: 26px;
+}
+
+.excluded-range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.excluded-range-row input[type='date'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.excluded-range-sep {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.excluded-range-remove {
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 6px;
+  min-height: 26px;
+  flex: 0 0 auto;
+}
+
 .config,
 .sprint-selector,
 .chart-wrap,
