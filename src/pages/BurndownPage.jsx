@@ -116,7 +116,7 @@ function buildBurndownState(args, skipWeekends, excludedRanges, smooth = false) 
       const m = pastDays.length;
       const smoothed = withDate.map((issue, idx) => {
         const dayIdx = Math.min(Math.floor(((idx + 1) * m) / withDate.length) - 1, m - 1);
-        return { ...issue, doneDate: pastDays[Math.max(0, dayIdx)] };
+        return { ...issue, doneDate: pastDays[Math.max(1, dayIdx)] };
       });
       effectiveCompleted = [
         ...smoothed,
